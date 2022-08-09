@@ -1,0 +1,32 @@
+steps:
+- name: gcr.io/cloud-builders/gsutil
+  args: ['cp', 'gs://${_BUCKET_NAME}/salesforce.key', 'salesforce.key']
+- name: "gcr.io/devops-salesforce/salesforcedx-base-image:1"
+  args:
+  - force:auth:jwt:grant
+  - -u
+  - ${_SF_USERNAME}
+  - -f
+  - ./salesforce.key
+  - -i
+  - ${_CONSUMER_KEY}
+- name: "gcr.io/devops-salesforce/salesforcedx-base-image:1"
+  args:
+  - force:org:create
+  - --setdefaultusername
+  - --definitionfile
+  - config/project-scratch-def.json
+  - --targetdevhubusername
+  - ${_SF_USERNAME}
+  - --setalias
+  - testing org
+- name: "gcr.io/devops-salesforce/salesforcedx-base-image:1"
+  args: ['force:source:push']
+- name: "gcr.io/devops-salesforce/salesforcedx-base-image:1"
+  args: ['force:apex:test:run', '--resultformat', 'tap', '--codecoverage']
+- name: "gcr.io/devops-salesforce/salesforcedx-base-image:1"
+  args: ['force:org:delete', '--noprompt']
+substitutions:
+  _BUCKET_NAME: __BUCKET_NAME__
+  _SF_USERNAME: __USERNAME__
+  _CONSUMER_KEY: __CONSUMER_KEY__

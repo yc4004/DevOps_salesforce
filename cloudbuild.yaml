@@ -1,0 +1,19 @@
+steps:
+- name: gcr.io/cloud-builders/gsutil
+  args: ['cp', 'gs://${_BUCKET_NAME}/salesforce.key', 'salesforce.key']
+- name: "gcr.io/devops-salesforce/salesforcedx-base-image:1"
+  args:
+  - force:auth:jwt:grant
+  - --setdefaultusername
+  - -u
+  - ${_SF_USERNAME}
+  - -f
+  - ./salesforce.key
+  - -i
+  - ${_CONSUMER_KEY}
+- name: "gcr.io/devops-salesforce/salesforcedx-base-image:1"
+  args: ['force:source:deploy', '-p', './force-app/']
+substitutions:
+  _BUCKET_NAME: __BUCKET_NAME__
+  _SF_USERNAME: __USERNAME__
+  _CONSUMER_KEY: __CONSUMER_KEY__
